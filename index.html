@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Synor Terminal</title>
+    <style>
+        body {
+            background-color: #000;
+            display: flex;
+            flex-direction: column;  /* 改为纵向排列 */
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        
+        .terminal-text {
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 72px;  /* 增大字体大小 */
+            text-shadow: 0 0 5px #0f0;
+            animation: blink 1s infinite;
+            position: relative;
+            z-index: 2;
+            margin-bottom: 30px;  /* 添加下边距 */
+        }
+
+        .start-button {
+            padding: 15px 40px;
+            font-size: 24px;
+            background-color: transparent;
+            color: #0f0;
+            border: 2px solid #0f0;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            z-index: 2;
+            text-decoration: none;  /* 移除下划线 */
+        }
+
+        .start-button:hover {
+            background-color: #0f0;
+            color: #000;
+            box-shadow: 0 0 15px #0f0;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-bg"></canvas>
+    <div class="terminal-text">Synor Terminal_</div>
+    <a href="second_page.html" class="start-button">START</a>
+
+    <script>
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = '01';
+        const fontSize = 14;
+        const columns = canvas.width/fontSize;
+        
+        const drops = [];
+        for(let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(draw, 33);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

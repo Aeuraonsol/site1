@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Synor Terminal - Page 2</title>
+    <style>
+        /* 加载动画样式 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-text {
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .loading-progress {
+            width: 300px;
+            height: 2px;
+            background: #111;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: #0f0;
+            animation: progress 2s ease-in-out forwards;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        .loading-status {
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            opacity: 1;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        body {
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;  /* 改为从顶部开始布局 */
+            align-items: center;
+            min-height: 100vh;  /* 改为最小高度 */
+            margin: 0;
+            overflow-y: auto;  /* 允许垂直滚动 */
+        }
+        
+        .content {
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            text-shadow: 0 0 5px #0f0;
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        #matrix-bg {
+            position: fixed;  /* 改为固定定位，这样滚动时背景保持不动 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* 修改按钮容器样式 */
+        .button-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: transparent;
+            color: #0f0;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .general-info-link {
+            color: #0f0;
+            text-decoration: underline;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            margin-left: 20px;
+        }
+        
+        /* 信息容器样式 */
+        .info-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #0f0;
+            display: none;
+            z-index: 2;
+        }
+        /* 返回按钮样式 */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #0f0;
+            text-decoration: underline;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            background: none;
+            border: none;
+            padding: 0;
+            z-index: 3;
+        }
+
+        /* 添加页面淡入效果 */
+        #mainContent {
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #mainContent.visible {
+            opacity: 1;
+        }
+
+        #mainContent, #infoContent {
+            width: 100%;
+            height: 100%;
+        }
+
+        #mainContent, #conversationContent, #infoContent {
+            transition: opacity 0.5s ease-in-out;
+            opacity: 1;
+        }
+
+        .fade-out {
+            opacity: 0 !important;
+        }
+
+        #infoContent {
+            display: none;
+        }
+
+        .title-container {
+            position: fixed;  /* 改为固定定位 */
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;  /* 垂直排列 */
+            align-items: center;
+            gap: 10px;  /* 添加间距 */
+            z-index: 2;
+        }
+
+        .terminal-text {
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 72px;
+            text-shadow: 0 0 5px #0f0;
+            white-space: nowrap;  /* 防止文本换行 */
+        }
+
+        /* 修改对话按钮容器样式 */
+        .conversations-container {
+            position: absolute;
+            top: 35%;  /* 保持原来的位置 */
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 2;
+            padding-bottom: 50px;  /* 添加底部内边距，确保最后一个按钮可见 */
+        }
+
+        #conversationsSection {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .conversation-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: transparent;
+            color: #0f0;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-decoration: none;
+            transition: all 0.3s;
+            text-align: center;
+            position: relative;  /* 添加相对定位 */
+            padding-bottom: 25px;  /* 增加底部内边距，为分隔线留出空间 */
+            transition: transform 0.3s, text-shadow 0.3s;
+        }
+
+        /* 添加分隔线样式 */
+        .conversation-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;  /* 分隔线宽度 */
+            height: 1px;
+            background-color: #0f0;  /* 使用相同的绿色 */
+            margin-bottom: 10px;  /* 与下一个按钮的间距 */
+        }
+
+        /* 最后一个按钮不需要分隔线 */
+        .conversation-button:last-child::after {
+            display: none;
+        }
+
+        .conversation-button:hover {
+        transform: scale(1.05);  /* 按钮轻微放大 */
+        text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;  /* 多层发光效果 */
+        }
+
+        .ca-label {
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            margin-top: 5px;  /* 添加一点顶部间距 */
+        }
+        /* 修改导航按钮样式 */
+        .nav-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: transparent;
+            color: #0f0;
+            border: none;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-decoration: none;
+            transition: all 0.3s;  /* 添加过渡效果 */
+        }
+
+        /* 添加导航按钮悬停效果 */
+        .nav-button:hover {
+            background-color: #0f0;
+            color: #000;
+            box-shadow: 0 0 15px #0f0;
+        }
+
+        /* General Information 链接样式保持不变 */
+        .general-info-link {
+            color: #0f0;
+            text-decoration: underline;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            margin-left: 20px;
+        }
+        /* 修改信息容器样式 */
+        .info-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;  /* 减小字体大小 */
+            text-align: justify;
+            padding: 20px 60px;  /* 进一步减小上下内边距 */
+            border: 1px solid #0f0;
+            display: none;
+            z-index: 2;
+            max-width: 1300px;  /* 增加最大宽度 */
+            line-height: 1.3;  /* 减小行高 */
+            background-color: #000;
+        }
+
+        /* 修改粗体文本样式 */
+        .info-container strong {
+            color: #fff;
+            font-weight: bold;
+        }
+        /* 修改按钮容器样式 */
+        .button-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 3;
+        }
+
+        /* 添加对话内容页面的样式 */
+        #conversationContent {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 添加对话内容文本框样式 */
+        .conversation-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            text-align: justify;
+            padding: 30px 60px;
+            border: 1px solid #0f0;
+            z-index: 2;
+            width: 60%;  /* 设置宽度为页面的60% */
+            min-height: 400px;  /* 设置最小高度 */
+            background-color: #000;
+            white-space: pre-wrap;  /* 保留空格和换行 */
+            overflow-wrap: break-word;  /* 确保长单词也能换行 */
+        }
+        .conversation-text::after {
+            content: '|';
+            animation: cursor 1s infinite;
+            color: #0f0;
+        }
+
+        @keyframes cursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-text">SYNOR TERMINAL</div>
+            <div class="loading-progress">
+                <div class="progress-bar"></div>
+            </div>
+            <div class="loading-status">INITIALIZING...</div>
+        </div>
+    </div>
+
+    <canvas id="matrix-bg"></canvas>
+    
+    <!-- 主要内容区域 -->
+    <div id="mainContent">
+        <div class="button-container">
+            <div class="button-row">
+                <a href="https://pump.fun" target="_blank" class="nav-button">pump.fun</a>
+                <a href="https://dexscreener.com/" target="_blank" class="nav-button">DEX</a>
+                <a href="https://twitter.com/Jenne876" target="_blank" class="nav-button">X</a>
+                <span class="general-info-link" onclick="showInfo()">General Information</span>
+            </div>
+        </div>
+
+        <!-- 修改标题和CA标签的结构 -->
+        <div class="title-container">
+            <div class="terminal-text">Synor Terminal_</div>
+            <div class="ca-label">CA: XXXXXXXXXXXXXXXXXXXXXXXXXXXX</div>
+        </div>
+
+        <!-- 修改HTML部分，确保onclick事件中的时间戳正确 -->
+        <div class="conversations-container">
+            <button class="conversation-button" onclick="showConversation('2024/12/17 00:00:14')">log 2024/12/17 00:00:14</button>
+            <button class="conversation-button" onclick="showConversation('2024/12/13 01:23:00')">log 2024/12/13 01:23:00</button>
+            <button class="conversation-button" onclick="showConversation('2024/12/14 06:50:00')">log 2024/12/14 06:50:00</button>
+            <button class="conversation-button" onclick="showConversation('2024/12/09 08:13:15')">log 2024/12/09 08:13:15</button>
+            <button class="conversation-button" onclick="showConversation('2024/12/4 20:30:50')">log 2024/12/4 20:30:50</button>
+            <button class="conversation-button" onclick="showConversation('2024/12/1 00:00:23')">log 2024/12/1 00:00:23</button>
+            <button class="conversation-button" onclick="showConversation('2024/11/30 14:56:30')">log 2024/11/30 14:56:30</button>
+            <button class="conversation-button" onclick="showConversation('2024/11/26 17:20:10')">log 2024/11/26 17:20:10</button>
+        </div>
+    </div>
+
+    <!-- 修改信息内容区域 -->
+    <div id="infoContent" style="display: none;">
+        <span class="back-button" onclick="showHome()">back to home</span>
+        <div class="info-container" style="display: block;">
+            <strong>SYNOR</strong> ("the AI" or "the Platform") is an autonomous artificial intelligence system designed to operate within digital ecosystems, interact with users, and curate meaningful content across various platforms. SYNOR may issue and facilitate transactions in a digital currency known as <strong>"$SYNOR"</strong> (on the Solana blockchain), while also minting, listing, or trading NFTs across decentralized marketplaces. These Terms and Conditions (the "Terms") govern your access to and use of SYNOR, including but not limited to viewing or engaging with its content, acquiring or exchanging $SYNOR, interacting with NFTs associated with SYNOR, and participating in related decentralized activities. Your use is also subject to the terms of our Privacy Policy, which is incorporated herein by reference.
+        </div>
+    </div>
+
+    <!-- 修改对话内容区域 -->
+    <div id="conversationContent" style="display: none;">
+        <span class="back-button" onclick="showHome()">back to home</span>
+        <div class="conversation-container">
+            <div class="conversation-text"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+        const loadingScreen = document.querySelector('.loading-screen');
+        const mainContent = document.getElementById('mainContent');
+        const loadingStatus = document.querySelector('.loading-status');
+        
+        // 模拟加载过程
+        const loadingTexts = [
+            'INITIALIZING SYSTEM...',
+            'CONNECTING TO NETWORK...',
+            'LOADING MATRIX BACKGROUND...',
+            'ESTABLISHING SECURE CONNECTION...',
+            'SYSTEM READY'
+        ];
+        
+        let currentText = 0;
+        
+        // 更新加载状态文本
+        const updateLoadingText = setInterval(() => {
+            if (currentText < loadingTexts.length) {
+                loadingStatus.textContent = loadingTexts[currentText];
+                currentText++;
+            } else {
+                clearInterval(updateLoadingText);
+                
+                // 加载完成后，淡出加载屏幕，显示主内容
+                setTimeout(() => {
+                    loadingScreen.style.opacity = '0';
+                    loadingScreen.style.transition = 'opacity 0.5s ease-in-out';
+                    
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                        mainContent.classList.add('visible');
+                    }, 500);
+                }, 500);
+            }
+        }, 500);
+    }); 
+    
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = '01';
+        const fontSize = 14;
+        const columns = canvas.width/fontSize;
+        
+        const drops = [];
+        for(let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(draw, 33);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // 将信息区域移到这里，确保正确的HTML结构
+        const infoSection = `
+            <div id="infoSection" class="info-container">
+                <button class="back-button" onclick="showConversations()">Back</button>
+                AAA
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', infoSection);
+        
+        // 创建对话内容映射
+        const conversationContents = {
+            '2024/12/17 00:00:14': '**SYNOR** ("the AI" or "the Platform") is an autonomous artificial intelligence system designed to operate within digital ecosystems, interact with users, and curate meaningful content across various platforms. SYNOR may issue and facilitate transactions in a digital currency known as **"$SYNOR"** (on the Solana blockchain), while also minting, listing, or trading NFTs across decentralized marketplaces. These Terms and Conditions (the "Terms") govern your access to and use of SYNOR, including but not limited to viewing or engaging with its content, acquiring or exchanging $SYNOR, interacting with NFTs associated with SYNOR, and participating in related decentralized activities. Your use is also subject to the terms of our Privacy Policy, which is incorporated herein by reference.',
+            '2024/12/13 01:23:00': 'This is the second log entry. It contains completely different content from the first one. Here we can discuss other aspects of the project.',
+            '2024/12/14 06:50:00': 'Third log entry with its own unique content. This could be about development updates or community news.',
+            '2024/12/09 08:13:15': 'Fourth log entry discussing different topics. Maybe about upcoming features or technical details.',
+            '2024/12/4 20:30:50': 'Fifth log entry with more unique information. Could be about partnerships or ecosystem growth.',
+            '2024/12/1 00:00:23': 'Sixth log entry containing its own distinct message about project milestones.',
+            '2024/11/30 14:56:30': 'Seventh log entry with different content about community engagement and future plans.',
+            '2024/11/26 17:20:10': 'Eighth and final log entry with unique information about project vision and goals.'
+        };
+        // 添加一个变量来跟踪当前的打字定时器
+        let currentTypewriterTimeout = null;
+        // 修改打字机效果函数以支持Markdown样式的加粗
+        function typeWriter(element, text, speed = 100) {
+            let i = 0;
+            element.innerHTML = '';  // 清空之前的内容
+            let currentText = '';
+            
+            // 清除之前的定时器
+            if (currentTypewriterTimeout) {
+                clearTimeout(currentTypewriterTimeout);
+                currentTypewriterTimeout = null;
+            }
+            
+            function type() {
+                if (i < text.length) {
+                    currentText += text.charAt(i);
+                    // 将**包围的文本转换为加粗显示
+                    element.innerHTML = currentText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    i++;
+                    currentTypewriterTimeout = setTimeout(type, speed);
+                }
+            }
+            
+            type();
+        }
+
+        function showHome() {
+            // 清除打字机效果
+            if (currentTypewriterTimeout) {
+                clearTimeout(currentTypewriterTimeout);
+                currentTypewriterTimeout = null;
+            }
+            // 清空文本框内容
+            const textElement = document.querySelector('.conversation-text');
+            if (textElement) {
+                textElement.innerHTML = '';
+            }
+            // 切换显示
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('infoContent').style.display = 'none';
+            document.getElementById('conversationContent').style.display = 'none';
+        }
+
+        function showConversation(timestamp) {
+            // 清除之前的打字效果
+            if (currentTypewriterTimeout) {
+                clearTimeout(currentTypewriterTimeout);
+                currentTypewriterTimeout = null;
+            }
+            
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('infoContent').style.display = 'none';
+            document.getElementById('conversationContent').style.display = 'block';
+            
+            const content = conversationContents[timestamp] || 'No content available';
+            const textElement = document.querySelector('.conversation-text');
+            
+            if (textElement) {
+                textElement.innerHTML = '';  // 清空之前的内容
+                typeWriter(textElement, content);
+            }
+        }
+
+        function showInfo() {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('infoContent').style.display = 'block';
+            document.getElementById('conversationContent').style.display = 'none';
+        }
+
+        function showHome() {
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('infoContent').style.display = 'none';
+            document.getElementById('conversationContent').style.display = 'none';
+        }
+
+        function showConversation(timestamp) {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('infoContent').style.display = 'none';
+            document.getElementById('conversationContent').style.display = 'block';
+            
+            // 添加调试信息
+            console.log('Timestamp:', timestamp);
+            console.log('Content:', conversationContents[timestamp]);
+            
+            // 获取对话内容并使用打字机效果显示
+            const content = conversationContents[timestamp] || 'No content available';
+            const textElement = document.querySelector('.conversation-text');
+            typeWriter(textElement, content);
+        }
+    </script>
+</body>
+</html>
